@@ -15,9 +15,12 @@ const char* password = "hPf2aWjVHq";
 const char* URL_TEMP = "http://192.168.100.18:3000/api/temperatura";
 const char* URL_HUM = "http://192.168.100.18:3000/api/humedad";
 
-// Tiempo de espera entre lecturas
-const unsigned long INTERVALO = 5 * 60 * 1000;  // 5 minutos en milisegundos
+// Tiempos de espera
+const unsigned long INTERVALO_ENVIO = 5 * 60 * 1000;  // 5 minutos
+const unsigned long INTERVALO_SERIAL = 5000;          // 5 segundos
+
 unsigned long ultimoEnvio = 0;
+unsigned long ultimoSerial = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -41,7 +44,22 @@ void setup() {
 }
 
 void loop() {
-  if (millis() - ultimoEnvio >= INTERVALO) {
+  // Mostrar en serial cada 5 segundos
+  if (millis() - ultimoSerial >= INTERVALO_SERIAL) {
+    ultimoSerial = millis();
+
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+
+    if (!isnan(h) && !isnan(t)) {
+      Serial.printf("Temp: %.2f °C | Humedad: %.2f %%\n", t, h);
+    } else {
+      Serial.println("Error al leer DHT11");
+    }
+  }
+
+  // Enviar cada 5 minutos
+  if (millis() - ultimoEnvio >= INTERVALO_ENVIO) {
     ultimoEnvio = millis();
 
     float h = dht.readHumidity();
